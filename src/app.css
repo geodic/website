@@ -1,0 +1,59 @@
+@import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@font-face {
+	font-family: 'Ease Variable';
+	src: url('$assets/web/fonts/EaseVariable.woff2');
+}
+
+@font-face {
+	font-family: 'Noi Variable Fix';
+	src: url('$assets/web/fonts/NoiVariableFix.ttf');
+}
+
+@theme {
+	--font-heading: 'Ease Variable', Helvetica, Arial, sans-serif;
+	--font-heading--font-feature-settings: 'ss07', 'ss02';
+	--font-heading--font-variation-settings:
+		'wght' 600, 'ital' 0, 'insd' 70, 'ousd' 50, 'MOV1' 0, 'MOV2' 0;
+
+	--font-info: 'Noi Variable Fix', Isoveka, sans-serif;
+	--font-info--font-feature-settings: 'ss05', 'ss04';
+	--font-info--font-variation-settings:
+		'wght' 550, 'ital' 0, 'insd' 0, 'ousd' 0, 'MOV1' 0, 'MOV2' 0;
+
+	--text-5xl--line-height: var(--leading-tight);
+	--text-6xl--line-height: var(--leading-tight);
+	--text-7xl--line-height: var(--leading-tight);
+	--text-8xl--line-height: var(--leading-tight);
+	--text-9xl--line-height: var(--leading-tight);
+
+	--color-background: var(--color-zinc-100);
+	--color-highlight: var(--color-zinc-200);
+	--color-primary: var(--color-zinc-700);
+	--color-secondary: var(--color-zinc-500);
+	--color-secondary-contrast: var(--color-zinc-300);
+}
+
+@layer base {
+	@variant dark {
+		--color-background: var(--color-zinc-800);
+		--color-highlight: var(--color-zinc-700);
+		--color-primary: var(--color-zinc-100);
+		--color-secondary: var(--color-zinc-300);
+		--color-secondary-contrast: var(--color-zinc-500);
+	}
+
+	:root {
+		@apply transition-all duration-500;
+		interpolate-size: allow-keywords;
+	}
+
+	*,
+	*::before,
+	*::after {
+		@apply transition-[inherit] duration-[inherit];
+	}
+}

@@ -1,0 +1,67 @@
+---
+title: Building a rat-ratgdo with an ESP32-C3 SuperMini
+description: My experience building a custom rat-ratgdo to automate my garage door.
+date: '2025-7-8'
+tags:
+  - hardware
+  - esp32
+published: true
+---
+
+I've been meaning to connect my garage door opener to Home Assistant for a while, and I finally got around to building a rat-ratgdo using an ESP32-C3 SuperMini. I chose the SuperMini mainly because of its compact size and low cost — it’s tiny, fits just about anywhere, and I already had a few lying around. Plus, it felt like a good opportunity to learn more about the internals of how the RATGDO works.
+
+---
+
+## Challenges
+
+The hardest part of building this thing was the lack of prior work with the ESP32-C3. The rat-ratgdo community is heavily based on the ESP8266 and ESP32-WROOM modules, so most of the documentation, examples, and firmware options are centered around those boards.
+
+There were a couple of pre-made schematics floating around — mainly for the Wemos D1 and the ESP32 DevKit — but nothing that matched the SuperMini pinout or its GPIO quirks. This meant I’d have to build my own schematic and layout.
+
+On top of that, the ESP32-C3 has a few gotchas, like certain GPIOs (6–11) being tied to the onboard SPI flash, which makes them pretty much unusable. It was clear I’d have to design this from the ground up.
+
+---
+
+## Designing the Schematic
+
+I fired up Fritzing and started copying the original Wemos schematic as a baseline, then began adapting it for the SuperMini’s layout. It was mostly straightforward — just a matter of finding safe GPIOs for each signal and making sure nothing overlapped with restricted pins.
+
+I wired up the UART lines, the relay, and the door state and obstruction sensors. The SuperMini doesn't have as many exposed pins as the DevKit, so it was tight, but it worked out. Here are my schematic and breadboard designs:
+
+![Schematic Diagram]($assets/blog/images/ratgdo-schematic.png)
+
+![Breadboard Design]($assets/blog/images/ratgdo-breadboard.png)
+
+I’ve uploaded the Fritzing `.fzz` file to [Google Drive](https://drive.google.com/file/d/1jI6WY3P5migSJ9a1lKI0HIRwySOdTBoY/view?usp=sharing) if anyone wants to use it as a base.
+
+---
+
+## Flashing the Firmware
+
+Getting the firmware working was surprisingly painless — after spending a good chunk of time digging through the ESPHome docs and GitHub threads trying to figure out which version would actually support this setup. The docs aren’t exactly clear on which firmware is compatible with which board, especially when you're going off the beaten path.
+
+Eventually I settled on flashing the v2.5 firmware with my modified pin config. I didn’t expect it to work on the first try, but somehow it did — it booted, connected to Wi-Fi, and started publishing status updates to Home Assistant immediately. Not bad for a first flash.
+
+---
+
+## Obstruction Sensor Issues
+
+After mounting the board inside my opener and wiring everything up, I noticed something weird — the obstruction sensor was always reporting “unblocked,” no matter what. I double-checked the wiring, verified the logic level on the pin, and even swapped the pins themselves, but nothing changed.
+
+Eventually I went digging through the source code in the `esphome-ratgdo` repo and found a recent commit titled **“add support for ratgdo32disco.”** In the diff, I saw that they added a line that automatically inverts the obstruction signal **if it detects an ESP32 chip**. No check for board type, no toggle — just blind inversion.
+
+Presumably, the official `ratgdo32disco` board uses an inverter circuit on that line, and this code was meant to compensate for that. But since my setup doesn’t use the disco board and I’m not inverting anything in hardware, the firmware logic was effectively breaking the sensor.
+
+I patched the code to disable the inversion and re-flashed, and it started working instantly. I also updated my schematic to clean up the wiring and avoid any misleading assumptions about the logic level.
+
+---
+
+## Conclusion
+
+This project ended up being more educational than I expected — I had to reverse-engineer firmware assumptions, patch source code, and fully design my own hardware layout from scratch. But it works now, and I’ve got a fully custom RATGDO that’s integrated with Home Assistant and built around a $3 board.
+
+If you're thinking about building your own version of this or adapting it to the ESP32-C3, feel free to use my schematic and firmware patch as a reference.
+
+If you need help or want to ask questions, I opened a GitHub issue to track this project and help others:  
+[https://github.com/Kaldek/rat-ratgdo/issues/128](https://github.com/Kaldek/rat-ratgdo/issues/128)
+
